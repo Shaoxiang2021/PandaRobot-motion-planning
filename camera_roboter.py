@@ -12,8 +12,11 @@ from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
 
 from tf.transformations import quaternion_from_euler
+from tf.transformations import euler_from_quaternion
 
-from ueye_camera import UeyeCamera
+import time
+
+# from ueye_camera import UeyeCamera
 
 class CameraRoboter():
     def __init__(self):
@@ -28,27 +31,30 @@ class CameraRoboter():
         self.display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
 
         # Toleranzen
-        self.group.set_goal_position_tolerance(0.001)
-        self.group.set_goal_orientation_tolerance(0.05)
+        self.group.set_goal_position_tolerance(0.00001)
+        self.group.set_goal_orientation_tolerance(0.00001)
 
         # Initailisiere Kamera
-        self.Camera = UeyeCamera()
+        # self.Camera = UeyeCamera()
 
-        # Initialisiere relevante Parameter für Roboter
-        self.x = 0.4
-        self.y = 0
-        self.z = 0.25
-        self.roll_angle = pi/4
-        self.pitch_angle = pi
-        self.yaw_angel = 0
+        # Initialisiere Anfangspose, die nach dem Kalibrierensvorgang korriegiert wird
+        self.x_0 = 0.4
+        self.y_0 = 0
+        self.z_0 = 0.4
+        self.roll_angle_0 = pi/4
+        self.pitch_angle_0 = pi
+        self.yaw_angel_0 = 0
+
+        # Initialisiere Position von Roboter
+        self.pose = self.group.get_current_pose().pose
 
         # Initialisiere relevante Parameter für Kamera
         # self.exposure_time = 10
 
     def caculation_pose(self, angle):
-        return [self.z*sin(angle), self.z*cos(angle)]
+        return [self.pose.position.y + self.pose.position.z*sin(angle), self.pose.position.z*cos(angle)]
 
-    def move_robot(self, x, y, z, roll, pitch, yaw):
+    def move(self, x, y, z, roll, pitch, yaw):
 
         # Zielpose festlegen
         pose_goal = geometry_msgs.msg.Pose()
@@ -68,13 +74,48 @@ class CameraRoboter():
         # Führe die Bewegung aus
         self.group.go(wait=True)
 
+        # Stoppe den Roboter
+        self.group.stop()
+
+        # Löschen die Zielposition
+        self.group.clear_pose_targets()
+    
+    def move_keep_orientation(self, x, y, z):
+
+        # Zielpose festlegen
+        pose_goal = geometry_msgs.msg.Pose()
+        pose_goal.position.x = x
+        pose_goal.position.y = y
+        pose_goal.position.z = z
+
+        pose_goal.orientation.w = self.pose.orientation.w
+        pose_goal.orientation.x = self.pose.orientation.x
+        pose_goal.orientation.y = self.pose.orientation.y
+        pose_goal.orientation.z = self.pose.orientation.z
+
+        # Zielpose zum Buffer der Bewegungsplanung hinzufügen
+        self.group.set_pose_target(pose_goal)
+
+        # Führe die Bewegung aus
+        self.group.go(wait=True)
+
         #Stoppe den Roboter
         self.group.stop()
 
         # Löschen die Zielposition
         self.group.clear_pose_targets()
 
-    def move_lin_robot(self, x, y, z):
+    def move_with_angle(self, angle):
+        quaternion = [self.pose.orientation.w, self.pose.orientation.x, self.pose.orientation.y, self.pose.orientation.z]
+        euler_anlge = euler_from_quaternion(quaternion)
+        roll = euler_anlge[0]
+        pitch = euler_anlge[1]
+        yaw = euler_anlge[2] - angle
+        x = self.pose.position.x
+        y, z = self.caculation_pose(angle)
+        self.move(x, y, z, roll, pitch, yaw)
+
+    def move_lin(self, x, y, z):
 
         # Aktuelle Pose auslegen und Zielpose festlegen
         home_pose=self.group.get_current_pose().pose
@@ -91,7 +132,7 @@ class CameraRoboter():
         # Führe die Bewegung aus
         self.group.execute(plan, wait=True)
 
-    def move_joint_robot(self, j0, j1, j2, j3, j4, j5, j6):
+    def move_joint(self, j0, j1, j2, j3, j4, j5, j6):
 
         # Lese die aktuelle Pose des Roboters aus und beeschreibe die Joint-Ziel-Pose
         joint_goal = self.group.get_current_joint_values()
@@ -109,31 +150,25 @@ class CameraRoboter():
         # Stoppe den Roboter
         self.group.stop()
 
-    def combine_move(self, mode, moving_step, num_step, angle):
-        roll = self.roll_angle
-        pitch = self.pitch_angle
-        yaw = self.yaw_angel - angle
-        y, z = self.caculation_pose(angle)
+    def move_trajectory(self, moving_step, num_step):
         for i in range(num_step):
-            if mode[i] == 0:
-                # j0, j1, j2, j3, j4, j5, j6 = 
-                # self.move_joint_robot(j0, j1, j2, j3, j4, j5, j6)
-                pass
-            elif mode[i] == 1:
-                x = self.x + i*moving_step
-                self.move_robot(x, y, z, roll, pitch, yaw)
-            elif mode[i] == 2:
-                x = self.x + i*moving_step
-                self.move_lin_robot(x, y, z)
-            else:
-                print("Error input, mode should be 0-2!")
+            x = self.pose.position.x + (i+1)*moving_step
+            self.move_keep_orientation(x, self.pose.position.y, self.pose.position.z)
 
+    def move_lin_trajectory(self, moving_step, num_step, sleep_time):
+        for i in range(num_step):
+            x = self.pose.position.x + (i+1)*moving_step
+            self.move_lin(x, self.pose.position.y, self.pose.position.z)
+            time.sleep(sleep_time)
 
     def return_to_ready_pose(self):
-        self.move_joint_robot(0, -pi/4, 0, -3*pi/4, 0, pi/2, pi/4)
+        self.move_joint(0, -pi/4, 0, -3*pi/4, 0, pi/2, pi/4)
 
     def show_position(self):
         print(self.group.get_current_pose().pose)
+
+    def update_pose(self):
+        self.pose = self.group.get_current_pose().pose
 
     def get_image(self):
         self.Camera.save_image()
