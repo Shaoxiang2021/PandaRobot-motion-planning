@@ -4,11 +4,13 @@ from pyueye import ueye
 
 class UeyeCamera():
     def __init__(self):
+        
         # init parameter
         self.width = 752
         self.height = 480
         self.bitspixel = 24 # for colormode = IS_CM_BGR8_PACKED
         self.num = 0
+
         # get data from camera and display
         self.lineinc = self.width * int((self.bitspixel + 7) / 8)
 
@@ -51,3 +53,22 @@ class UeyeCamera():
         filename = "Bild{}.jpg".format(self.num)
         cv2.imwrite(filename, img)
         print("Bild gespeichert als " + filename)
+
+    def get_video_stream(self):
+        while True:
+            img = ueye.get_data(self.mem_ptr, self.width, self.height, self.bitspixel, self.lineinc, copy=True)
+            img = np.reshape(img, (self.height, self.width, 3))
+            cv2.imshow('uEye Python Example (q to exit)', img)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            if cv2.waitKey(1) & 0xFF == ord('s'):
+                num = num + 1
+                filename = "Bild{}.jpg".format(num)
+                cv2.imwrite(filename, img)
+                print("Bild gespeichert als " + filename)
+                cv2.destroyAllWindows()
+                # cleanup
+                ret = ueye.is_StopLiveVideo(self.hcam, ueye.IS_FORCE_VIDEO_STOP)
+                print(f"StopLiveVideo returns {ret}")
+                ret = ueye.is_ExitCamera(self.hcam)
+                print(f"ExitCamera returns {ret}")
