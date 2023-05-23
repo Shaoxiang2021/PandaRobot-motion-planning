@@ -14,6 +14,11 @@ class DataManager():
         self.rotated_angle_z = "0"
         self.rotated_angle_x = "0"
 
+        self.generate_main_folder()
+    
+    def generate_main_folder(self):
+        os.makedirs(self.directory, exist_ok=True)
+
     def ask_example_info(self):
         while(True):
             id = input("Bitte geben Sie die Probe-ID: ")
@@ -27,6 +32,7 @@ class DataManager():
             print("Vorschubgeschwindigkeit = {}".format(speed))
             print("Drehzahl = {}".format(rotate_speed))
             print("Datum lautet: {}".format(date))
+            print("Index: {}".format(index))
             print("")
 
             check = self.input_check()
@@ -55,7 +61,10 @@ class DataManager():
         return label
     
     def generate_image_path(self):
-        pass
+        folder_name = '_'.join([self.index, self.id, self.speed, self.rotate_speed])
+        image_path = os.path.join(self.directory, folder_name)
+        os.makedirs(image_path, exist_ok=True)
+        return image_path
     
     def set_rotate_angle_x(self, angle_x):
         self.rotated_angle_x = str(round(angle_x, 2))
