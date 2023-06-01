@@ -1,15 +1,18 @@
 import cv2
 import numpy as np
 from pyueye import ueye
+from data_manager import DataManager
 
 class UeyeCamera():
-    def __init__(self):
+    def __init__(self, exposure_ms=10):
         
+        self.DataManager_Camera = DataManager()
+
         # init parameter
         self.width = 752
         self.height = 480
         self.bitspixel = 24 # for colormode = IS_CM_BGR8_PACKED
-        self.num = 0
+        self.exposure_ms = ueye.double(exposure_ms)
 
         # get data from camera and display
         self.lineinc = self.width * int((self.bitspixel + 7) / 8)
@@ -17,11 +20,15 @@ class UeyeCamera():
         # init camera
         self.hcam = ueye.HIDS(0)
         ret = ueye.is_InitCamera(self.hcam, None)
-        print(f"initCamera returns {ret}")
+        self.DataManager_Camera.print_and_write_into_log(f"initCamera returns {ret}")
 
         # set color mode
         ret = ueye.is_SetColorMode(self.hcam, ueye.IS_CM_BGR8_PACKED)
-        print(f"SetColorMode IS_CM_BGR8_PACKED returns {ret}")
+        self.DataManager_Camera.print_and_write_into_log(f"SetColorMode IS_CM_BGR8_PACKED returns {ret}")
+
+        # Belichtungszeit
+        ret =ueye.is_Exposure(self.hcam, ueye.IS_EXPOSURE_CMD_SET_EXPOSURE, self.exposure_ms, ueye.sizeof(self.exposure_ms))
+        self.DataManager_Camera.print_and_write_into_log(f"setExposure returns {ret}")
 
         # set region of interest
         self.rect_aoi = ueye.IS_RECT()
@@ -30,29 +37,40 @@ class UeyeCamera():
         self.rect_aoi.s32Width = ueye.int(self.width)
         self.rect_aoi.s32Height = ueye.int(self.height)
         ueye.is_AOI(self.hcam, ueye.IS_AOI_IMAGE_SET_AOI, self.rect_aoi, ueye.sizeof(self.rect_aoi))
-        print(f"AOI IS_AOI_IMAGE_SET_AOI returns {ret}")
+        self.DataManager_Camera.print_and_write_into_log(f"AOI IS_AOI_IMAGE_SET_AOI returns {ret}")
 
         # allocate memory
         self.mem_ptr = ueye.c_mem_p()
         self.mem_id = ueye.int()
         ret = ueye.is_AllocImageMem(self.hcam, self.width, self.height, self.bitspixel, self.mem_ptr, self.mem_id)
-        print(f"AllocImageMem returns {ret}")
+        self.DataManager_Camera.print_and_write_into_log(f"AllocImageMem returns {ret}")
 
         # set active memory region
         ret = ueye.is_SetImageMem(self.hcam, self.mem_ptr, self.mem_id)
-        print(f"SetImageMem returns {ret}")
+        self.DataManager_Camera.print_and_write_into_log(f"SetImageMem returns {ret}")
 
         # continuous capture to memory
         ret = ueye.is_CaptureVideo(self.hcam, ueye.IS_DONT_WAIT)
-        print(f"CaptureVideo returns {ret}")
+        self.DataManager_Camera.print_and_write_into_log(f"CaptureVideo returns {ret}")
+
+    def close(self):
+        ret = ueye.is_StopLiveVideo(self.hcam, ueye.IS_FORCE_VIDEO_STOP)
+        self.DataManager_Camera.print_and_write_into_log(f"StopLiveVideo returns {ret}")
+        ret = ueye.is_ExitCamera(self.hcam)
+        self.DataManager_Camera.print_and_write_into_log(f"ExitCamera returns {ret}")
     
-    def save_image(self):
+    def save_image(self, filename):
         img = ueye.get_data(self.mem_ptr, self.width, self.height, self.bitspixel, self.lineinc, copy=True)
         img = np.reshape(img, (self.height, self.width, 3))
-        self.num = self.num + 1
-        filename = "Bild{}.jpg".format(self.num)
         cv2.imwrite(filename, img)
-        print("Bild gespeichert als " + filename)
+        self.DataManager_Camera.print_and_write_into_log("image is saved als name: " + filename)
+
+    def show_image(self):
+        img = ueye.get_data(self.mem_ptr, self.width, self.height, self.bitspixel, self.lineinc, copy=True)
+        img = np.reshape(img, (self.height, self.width, 3))
+        cv2.imshow('uEye Python Example (q to exit)', img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     def get_video_stream(self):
         while True:
@@ -60,15 +78,7 @@ class UeyeCamera():
             img = np.reshape(img, (self.height, self.width, 3))
             cv2.imshow('uEye Python Example (q to exit)', img)
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-            if cv2.waitKey(1) & 0xFF == ord('s'):
-                num = num + 1
-                filename = "Bild{}.jpg".format(num)
-                cv2.imwrite(filename, img)
-                print("Bild gespeichert als " + filename)
                 cv2.destroyAllWindows()
                 # cleanup
-                ret = ueye.is_StopLiveVideo(self.hcam, ueye.IS_FORCE_VIDEO_STOP)
-                print(f"StopLiveVideo returns {ret}")
-                ret = ueye.is_ExitCamera(self.hcam)
-                print(f"ExitCamera returns {ret}")
+                self.close()
+                break
