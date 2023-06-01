@@ -53,10 +53,10 @@ class CameraRoboter():
 
         self.sleep_time = 0.5
 
-        self.set_scene()
+        # self.set_scene()
 
         # Initialisiere Anfangspose, die nach dem Kalibrierensvorgang korriegiert wird
-        self.x_init = 0.42
+        self.x_init = 0.43
         self.y_init = 0
         self.z_init = 0.35
         self.roll_angle_init = pi
@@ -108,7 +108,7 @@ class CameraRoboter():
         table_pose_1.header.frame_id = self.reference_frame
         table_pose_1.pose.position.x = 0.8
         table_pose_1.pose.position.y = 0.0
-        table_pose_1.pose.position.z = 0.3
+        table_pose_1.pose.position.z = 0.1
         table_pose_1.pose.orientation.w = 1.0
         self.scene.add_box(table_id_1, table_pose_1, table_size_1)
 
@@ -117,7 +117,7 @@ class CameraRoboter():
     def set_brightness_class(self, brightness_class):
         self.brightness_class = brightness_class
 
-    def move_pose(self, x, y, z, roll, pitch, yaw, save_image=False):
+    def move_pose(self, x, y, z, roll, pitch, yaw, image_index=0, save_image=False):
 
         # Zielpose festlegen
         pose_goal = geometry_msgs.msg.Pose()
@@ -145,9 +145,9 @@ class CameraRoboter():
 
         # Aufnahme ein Bild
         self.wait()
-        self.get_image(save_image)
+        self.get_image(save_image, image_index)
     
-    def move_position(self, x, y, z, save_image=False):
+    def move_position(self, x, y, z, image_index=0, save_image=False):
 
         pose = self.group.get_current_pose().pose
 
@@ -176,32 +176,15 @@ class CameraRoboter():
 
         # Aufnahme ein Bild
         self.wait()
-        self.get_image(save_image)
+        self.get_image(save_image, image_index)
 
     '''
     def caculation_pose(self, angle):
-        return [self.pose.position.y + self.pose.position.z*sin(angle), self.pose.position.z*cos(angle)]
-
-    def change_angle(self, angle):
-
-        # Berechne Euler Winkel des Roboters
-        quaternion = [self.pose.orientation.x, self.pose.orientation.y, self.pose.orientation.z, self.pose.orientation.w]
-        euler_anlge = euler_from_quaternion(quaternion)
-
-        # Umrechne Zielpose
-        roll = euler_anlge[0] - angle
-        # pitch = euler_anlge[1]
-        # yaw = euler_anlge[2]
-        pitch = 0
-        yaw = -pi/4
-        x = self.pose.position.x
-        y, z = self.caculation_pose(angle)
-
-        # Führe die Bewegung
-        self.move_pose(x, y, z, roll, pitch, yaw)
+        pose = self.group.get_current_pose().pose
+        return [pose.position.y + pose.position.z*sin(angle), pose.position.z*cos(angle)]
     '''
 
-    def move_linear(self, x, y, z, save_image=False):
+    def move_linear(self, x, y, z, image_index=0, save_image=False):
 
         # Aktuelle Pose auslegen und Zielpose festlegen
         home_pose=self.group.get_current_pose().pose
@@ -220,7 +203,7 @@ class CameraRoboter():
 
         # Aufnahme ein Bild
         self.wait()
-        self.get_image(save_image)
+        self.get_image(save_image, image_index)
 
     def move_joint(self, j0, j1, j2, j3, j4, j5, j6):
 
@@ -251,18 +234,41 @@ class CameraRoboter():
 
         # Stoppe den Roboter
         self.group.stop()
- 
+
+    def change_angle(self, angle):
+
+        pose = self.group.get_current_pose().pose
+
+        # Berechne Euler Winkel des Roboters
+        quaternion = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
+        euler_anlge = euler_from_quaternion(quaternion)
+
+        # Umrechne Zielpose
+        roll = euler_anlge[0] - angle
+        pitch = 0
+        yaw = 0
+        x = pose.position.x
+        y = pose.position.y + pose.position.z*sin(angle)
+        z = pose.position.z*cos(angle)
+
+        # Führe die Bewegung
+        self.move_pose(x, y, z, roll, pitch, yaw)
+
+        self.rotate(-pi/4)
+    
+    '''
     def move_trajectory(self, moving_step, num_step, save_image=False):
         pose = self.group.get_current_pose().pose
         for i in range(num_step):
             x = pose.position.x + (i+1)*moving_step
             self.move_position(x, pose.position.y, pose.position.z, save_image=save_image)
+    '''
 
     def move_linear_trajectory(self, moving_step, num_step, save_image=False):
         pose = self.group.get_current_pose().pose
         for i in range(num_step):
             x = pose.position.x + (i+1)*moving_step
-            self.move_linear(x, pose.position.y, pose.position.z, save_image=save_image)
+            self.move_linear(x, pose.position.y, pose.position.z, image_index=i+1, save_image=save_image)
 
     def return_to_ready_pose(self):
         self.move_joint(0, -pi/4, 0, -3*pi/4, 0, pi/2, -pi/4)
@@ -273,10 +279,10 @@ class CameraRoboter():
     # def update_pose(self):
         # self.pose = self.group.get_current_pose().pose
 
-    def get_image(self, take_image):
+    def get_image(self, take_image, image_index):
         pose = self.group.get_current_pose().pose
         if take_image is True:
-            filename = self.DataManager.generate_image_path(pose.position.x)
+            filename = self.DataManager.generate_image_path(pose.position.x, image_index)
             self.Camera.save_image(filename)
 
     def show_image(self):
@@ -301,6 +307,7 @@ class CameraRoboter():
     def take_action(self, save_image=False):
         
         try:
+            '''
             self.calibration()
             self.return_to_ready_pose()
 
@@ -312,6 +319,8 @@ class CameraRoboter():
                 self.move_linear_trajectory(0.016, 6, save_image=save_image)
                 self.return_to_ready_pose()
                 input("press any key to continue...")
+            '''
+            pass
 
         finally:
             self.close_camera()

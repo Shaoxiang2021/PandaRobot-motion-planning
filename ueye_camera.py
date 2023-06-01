@@ -80,5 +80,5 @@ class UeyeCamera():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()
                 # cleanup
-                self.close()
+                # self.close()
                 break
