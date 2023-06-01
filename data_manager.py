@@ -82,16 +82,14 @@ class DataManager():
         return angle_z
 
     def set_displacement_in_z(self, z):
-        self.displacement_in_z = str(round(z, 2))
+        self.displacement_in_z = str(round(z, 3))
         return z
     
     def set_zoom_blur(self, blur):
         self.zoom_blur = str(blur)
-        return blur
     
     def set_camera_noise(self, noise):
-        self.camera_noise = noise
-        return noise
+        self.camera_noise = str(noise)
     
     def set_basic_info(self, dict_info):
         self.id = dict_info["id"]

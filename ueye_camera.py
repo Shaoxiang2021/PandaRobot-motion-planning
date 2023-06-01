@@ -7,12 +7,17 @@ class UeyeCamera():
     def __init__(self, exposure_ms=10):
         
         self.DataManager_Camera = DataManager()
+        self.exposure_ms = exposure_ms
+
+        # self.init_camera()
+    
+    def init_camera(self):
 
         # init parameter
         self.width = 752
         self.height = 480
         self.bitspixel = 24 # for colormode = IS_CM_BGR8_PACKED
-        self.exposure_ms = ueye.double(exposure_ms)
+        self.exposure_ms = ueye.double(self.exposure_ms)
 
         # get data from camera and display
         self.lineinc = self.width * int((self.bitspixel + 7) / 8)

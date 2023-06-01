@@ -31,9 +31,9 @@ class CameraRoboter():
         group_name = "panda_arm"
         self.group = moveit_commander.MoveGroupCommander(group_name)
         # einstelle Toleranz
-        self.group.set_goal_joint_tolerance(0.0001)
-        self.group.set_goal_position_tolerance(0.0001)
-        self.group.set_goal_orientation_tolerance(0.001)
+        self.group.set_goal_joint_tolerance(0.00001)
+        self.group.set_goal_position_tolerance(0.00001)
+        self.group.set_goal_orientation_tolerance(0.0001)
 
         self.end_effector_link = self.group.get_end_effector_link()
         self.reference_frame = 'panda_link0'
@@ -53,7 +53,7 @@ class CameraRoboter():
 
         self.sleep_time = 0.5
 
-        # self.set_scene()
+        self.set_scene()
 
         # Initialisiere Anfangspose, die nach dem Kalibrierensvorgang korriegiert wird
         self.x_init = 0.43
@@ -99,18 +99,45 @@ class CameraRoboter():
         table_id_1 = 'table'
         # self.scene.remove_world_object(table_id_1)
         # rospy.sleep(1)
-        table_id_2 = 'workspace_left'
-        table_id_3 = 'workspace_right'
-        table_id_4 = 'workspace_front'
-        table_id_5 = 'workspace_back'
-        table_size_1 = [1, 1, 0.01]
+        table_id_2 = 'light_left'
+        table_id_3 = 'light_right'
+        table_id_4 = 'computer'
+
+        table_size_1 = [1, 0.8, 0.01]
         table_pose_1 = geometry_msgs.msg.PoseStamped()
         table_pose_1.header.frame_id = self.reference_frame
-        table_pose_1.pose.position.x = 0.8
+        table_pose_1.pose.position.x = 0.65
         table_pose_1.pose.position.y = 0.0
-        table_pose_1.pose.position.z = 0.1
+        table_pose_1.pose.position.z = 0.2
         table_pose_1.pose.orientation.w = 1.0
         self.scene.add_box(table_id_1, table_pose_1, table_size_1)
+
+        table_size_2 = [0.35, 0.1, 0.3]
+        table_pose_2 = geometry_msgs.msg.PoseStamped()
+        table_pose_2.header.frame_id = self.reference_frame
+        table_pose_2.pose.position.x = 0.48
+        table_pose_2.pose.position.y = -0.14
+        table_pose_2.pose.position.z = 0.15
+        table_pose_2.pose.orientation.w = 1.0
+        self.scene.add_box(table_id_2, table_pose_2, table_size_2)
+
+        table_size_3 = [0.35, 0.1, 0.3]
+        table_pose_3 = geometry_msgs.msg.PoseStamped()
+        table_pose_3.header.frame_id = self.reference_frame
+        table_pose_3.pose.position.x = 0.48
+        table_pose_3.pose.position.y = 0.14
+        table_pose_3.pose.position.z = 0.15
+        table_pose_3.pose.orientation.w = 1.0
+        self.scene.add_box(table_id_3, table_pose_3, table_size_3)
+
+        table_size_4 = [0.23, 0.6, 0.55]
+        table_pose_4 = geometry_msgs.msg.PoseStamped()
+        table_pose_4.header.frame_id = self.reference_frame
+        table_pose_4.pose.position.x = 0.18
+        table_pose_4.pose.position.y = -0.60
+        table_pose_4.pose.position.z = 0.2775
+        table_pose_4.pose.orientation.w = 1.0
+        self.scene.add_box(table_id_4, table_pose_4, table_size_4)
 
         self.DataManager.print_and_write_into_log("Initialize workspace...")
     
@@ -234,6 +261,10 @@ class CameraRoboter():
 
         # Stoppe den Roboter
         self.group.stop()
+    
+    def displacement_in_z(self, distance, save_image):
+
+        self.move_position(self.x_init, self.y_init, self.z_init+distance, save_image=save_image)
 
     def change_angle(self, angle):
 
@@ -294,9 +325,15 @@ class CameraRoboter():
     def close_camera(self):
         self.Camera.close()
 
-    def calibration(self):
+    def calibration(self, moving_step, num_step):
         self.move_position(self.x_init, self.y_init, self.z_init)
         self.show_image()
+        pose = self.group.get_current_pose().pose
+        for i in range(num_step):
+            x = pose.position.x + (i+1)*moving_step
+            self.move_linear(x, pose.position.y, pose.position.z)
+            self.show_image()
+        self.return_to_ready_pose()
 
     def keyboard_control(self):
         pass
