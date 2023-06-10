@@ -327,11 +327,12 @@ class CameraRoboter():
             self.move_position(x, pose.position.y, pose.position.z, save_image=save_image)
     '''
 
-    def move_linear_trajectory(self, moving_step, num_step, save_image=False):
+    def move_linear_trajectory(self, moving_step, num_step, corrector=0, save_image=False):
         pose = self.group.get_current_pose().pose
         for i in range(num_step):
             x = pose.position.x + (i+1)*moving_step
-            self.move_linear(x, pose.position.y, pose.position.z, image_index=i+1, save_image=save_image)
+            y = pose.position.y + (i+1)*corrector
+            self.move_linear(x, y, pose.position.z, image_index=i+1, save_image=save_image)
 
     def return_to_ready_pose(self):
         self.move_joint(0, -pi/4, 0, -3*pi/4, 0, pi/2, -pi/4)
