@@ -63,6 +63,8 @@ class CameraRoboter():
         self.pitch_angle_init = 0
         self.yaw_angel_init = pi/4
 
+        self.joints_ready = [-0.00011830792563942633, -0.23927708181946938, 0.0002144737230494664, -2.562571584299991, -0.0005028092541594219, 2.325421714520365, -0.7847578821678955]
+
         self.brightness_class = list()
 
         # Initialisiere Position von Roboter
@@ -102,6 +104,8 @@ class CameraRoboter():
         table_id_2 = 'light_left'
         table_id_3 = 'light_right'
         table_id_4 = 'computer'
+        table_id_5 = 'work_left'
+        table_id_6 = 'work_right'
 
         table_size_1 = [1, 0.8, 0.01]
         table_pose_1 = geometry_msgs.msg.PoseStamped()
@@ -138,6 +142,26 @@ class CameraRoboter():
         table_pose_4.pose.position.z = 0.2775
         table_pose_4.pose.orientation.w = 1.0
         self.scene.add_box(table_id_4, table_pose_4, table_size_4)
+
+        '''
+        table_size_5 = [0.4, 0.005, 1]
+        table_pose_5 = geometry_msgs.msg.PoseStamped()
+        table_pose_5.header.frame_id = self.reference_frame
+        table_pose_5.pose.position.x = 0
+        table_pose_5.pose.position.y = -0.2
+        table_pose_5.pose.position.z = 0.5
+        table_pose_5.pose.orientation.w = 1.0
+        self.scene.add_box(table_id_5, table_pose_5, table_size_5)
+
+        table_size_6 = [0.4, 0.005, 1]
+        table_pose_6 = geometry_msgs.msg.PoseStamped()
+        table_pose_6.header.frame_id = self.reference_frame
+        table_pose_6.pose.position.x = 0
+        table_pose_6.pose.position.y = 0.2
+        table_pose_6.pose.position.z = 0.5
+        table_pose_6.pose.orientation.w = 1.0
+        self.scene.add_box(table_id_6, table_pose_6, table_size_6)
+        '''
 
         self.DataManager.print_and_write_into_log("Initialize workspace...")
     
@@ -249,6 +273,14 @@ class CameraRoboter():
 
         # Stoppe den Roboter
         self.group.stop()
+    
+    def move_ready_pose(self, image_index=0, save_image=False):
+        [j0, j1, j2, j3, j4, j5, j6] = self.joints_ready
+        self.move_joint(j0, j1, j2, j3, j4, j5, j6)
+
+        # Aufnahme ein Bild
+        self.wait()
+        self.get_image(save_image, image_index)
 
     def rotate(self, angle):
 
@@ -326,7 +358,7 @@ class CameraRoboter():
         self.Camera.close()
 
     def calibration(self, moving_step, num_step):
-        self.move_position(self.x_init, self.y_init, self.z_init)
+        self.move_ready_pose()
         self.show_image()
         pose = self.group.get_current_pose().pose
         for i in range(num_step):

@@ -11,8 +11,8 @@ class DataManager():
         self.speed = "None"
         self.rotate_speed = "None"
         self.date = "None"
+        
         self.training_label = "None"
-
         self.brightness = "0"
         self.rotated_angle_z = "0"
         self.rotated_angle_x = "0"
@@ -108,7 +108,7 @@ class DataManager():
         file.close()
 
     def generate_label(self, x, image_index):
-        label = '_'.join([str(round(x, 2)), self.brightness, self.rotated_angle_x, self.rotated_angle_z, self.displacement_in_z, self.zoom_blur, self.camera_noise, str(self.training_label[image_index])]) + ".jpg"
+        label = '_'.join([time.strftime("%d.%m.%Y_%R:%S"), str(round(x, 2)), self.brightness, self.rotated_angle_x, self.rotated_angle_z, self.zoom_blur, str(self.training_label[image_index])]) + ".jpg"
         return label
     
     def generate_image_path(self, x, image_index):
