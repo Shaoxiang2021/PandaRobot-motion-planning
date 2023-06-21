@@ -11,8 +11,8 @@ class DataManager():
         self.speed = "None"
         self.rotate_speed = "None"
         self.date = "None"
+        self.force = "None"
         
-        self.training_label = "None"
         self.brightness = "0"
         self.rotated_angle_z = "0"
         self.rotated_angle_x = "0"
@@ -24,48 +24,6 @@ class DataManager():
     
     def generate_main_folder(self):
         os.makedirs(self.directory, exist_ok=True)
-
-    def ask_example_info(self):
-        while(True):
-            id = input("Bitte geben Sie die Probe-ID: ")
-            speed = input("Bitte Vorschubgeschwindigkeit eingeben:" )
-            rotate_speed = input("Bitte Drehzahl eingeben: ")
-            date = input("Bitte Datum eingeben: ")
-            index = input("Bitte Index von Probe eingeben: ")
-            print("Überprüfen bitte die Info ...")
-            print("")
-            print("Probe-ID = {}".format(id))
-            print("Vorschubgeschwindigkeit = {}".format(speed))
-            print("Drehzahl = {}".format(rotate_speed))
-            print("Datum lautet: {}".format(date))
-            print("Index: {}".format(index))
-            print("")
-
-            check = self.input_check()
-
-            if check == "J":
-                self.id = id
-                self.speed = speed
-                self.rotate_speed = rotate_speed
-                self.training_label = index
-                self.date = date
-                break
-            elif check == "N":
-                print("")
-                print("Bitte geb richtige Info ...")
-                print("")
-        self.write_example_info()
-    
-    def write_example_info(self):
-        self.print_and_write_into_log("")
-        self.print_and_write_into_log("start to chapture the images...")
-        self.print_and_write_into_log("--------------------------------")
-        self.print_and_write_into_log("probe-ID = {}".format(self.id))
-        self.print_and_write_into_log("speed = {}".format(self.speed))
-        self.print_and_write_into_log("rotate speed = {}".format(self.rotate_speed))
-        self.print_and_write_into_log("date at: {}".format(self.date))
-        self.print_and_write_into_log("index: {}".format(self.training_label))
-        self.print_and_write_into_log("")
 
     def ask_brightness(self):
         self.brightness = self.input_brightness()
@@ -96,7 +54,7 @@ class DataManager():
         self.speed = dict_info["speed"]
         self.rotate_speed = dict_info["rotate_speed"]
         self.date = dict_info["date"]
-        self.training_label = dict_info["training_label"]
+        self.force = dict_info["force"]
     
     def print_and_write_into_log(self, text):
         text_line = time.strftime("%d.%m.%Y %R:%S") + ": " + text
@@ -107,15 +65,15 @@ class DataManager():
         file.write(text_line + '\n')
         file.close()
 
-    def generate_label(self, x, image_index):
-        label = '_'.join([time.strftime("%d.%m.%Y_%R:%S"), str(round(x, 2)), self.brightness, self.rotated_angle_x, self.rotated_angle_z, self.zoom_blur, str(self.training_label[image_index])]) + ".jpg"
+    def generate_label(self, x):
+        label = '_'.join([time.strftime("%d.%m.%Y_%R:%S"), str(round(x, 2)), self.brightness, self.rotated_angle_x, self.rotated_angle_z, self.zoom_blur]) + ".jpg"
         return label
     
-    def generate_image_path(self, x, image_index):
-        folder_name = '_'.join([self.id, self.speed, self.rotate_speed])
+    def generate_image_path(self, x):
+        folder_name = '_'.join([self.id, self.speed, self.rotate_speed, self.force])
         folder_path = os.path.join(self.directory, folder_name)
         os.makedirs(folder_path, exist_ok=True)
-        image_label = self.generate_label(x, image_index)
+        image_label = self.generate_label(x,)
         image_path = os.path.join(folder_path, image_label)
         return image_path
     

@@ -58,6 +58,10 @@ class UeyeCamera():
         ret = ueye.is_CaptureVideo(self.hcam, ueye.IS_DONT_WAIT)
         self.DataManager_Camera.print_and_write_into_log(f"CaptureVideo returns {ret}")
 
+    def set_camera_exposure(self, exposure_ms):
+        ret =ueye.is_Exposure(self.hcam, ueye.IS_EXPOSURE_CMD_SET_EXPOSURE, self.exposure_ms, ueye.sizeof(exposure_ms))
+        self.DataManager_Camera.print_and_write_into_log(f"setExposure returns {ret}")
+
     def close(self):
         ret = ueye.is_StopLiveVideo(self.hcam, ueye.IS_FORCE_VIDEO_STOP)
         self.DataManager_Camera.print_and_write_into_log(f"StopLiveVideo returns {ret}")
@@ -81,6 +85,7 @@ class UeyeCamera():
         while True:
             img = ueye.get_data(self.mem_ptr, self.width, self.height, self.bitspixel, self.lineinc, copy=True)
             img = np.reshape(img, (self.height, self.width, 3))
+            cv2.line(img, (self.width//2, 0), (self.width//2, self.height), (0, 0, 255), 2)
             cv2.imshow('uEye Python Example (q to exit)', img)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()

@@ -48,7 +48,7 @@ class CameraRoboter():
 
         # Initailisiere Kamera und DataManager
         if load_camera is True:
-            self.Camera = UeyeCamera()
+            self.Camera = UeyeCamera(exposure_ms=7)
         self.DataManager = DataManager()
 
         self.sleep_time = 0.5
@@ -56,14 +56,14 @@ class CameraRoboter():
         self.set_scene()
 
         # Initialisiere Anfangspose, die nach dem Kalibrierensvorgang korriegiert wird
-        self.x_init = 0.43
+        self.x_init = 0.49
         self.y_init = 0
         self.z_init = 0.35
         self.roll_angle_init = pi
         self.pitch_angle_init = 0
         self.yaw_angel_init = pi/4
 
-        self.joints_ready = [-0.00011830792563942633, -0.23927708181946938, 0.0002144737230494664, -2.562571584299991, -0.0005028092541594219, 2.325421714520365, -0.7847578821678955]
+        self.joints_ready = [-0.0005271619215060288, -0.06608364050639302, 0.0006570654998020583, -2.372600785872206, 0.0006102935707507034, 2.313072631678507, -0.7852934202783396]
 
         self.brightness_class = list()
 
@@ -168,7 +168,7 @@ class CameraRoboter():
     def set_brightness_class(self, brightness_class):
         self.brightness_class = brightness_class
 
-    def move_pose(self, x, y, z, roll, pitch, yaw, image_index=0, save_image=False):
+    def move_pose(self, x, y, z, roll, pitch, yaw, save_image=False):
 
         # Zielpose festlegen
         pose_goal = geometry_msgs.msg.Pose()
@@ -196,9 +196,9 @@ class CameraRoboter():
 
         # Aufnahme ein Bild
         self.wait()
-        self.get_image(save_image, image_index)
+        self.get_image(save_image)
     
-    def move_position(self, x, y, z, image_index=0, save_image=False):
+    def move_position(self, x, y, z, save_image=False):
 
         pose = self.group.get_current_pose().pose
 
@@ -227,7 +227,7 @@ class CameraRoboter():
 
         # Aufnahme ein Bild
         self.wait()
-        self.get_image(save_image, image_index)
+        self.get_image(save_image)
 
     '''
     def caculation_pose(self, angle):
@@ -235,7 +235,7 @@ class CameraRoboter():
         return [pose.position.y + pose.position.z*sin(angle), pose.position.z*cos(angle)]
     '''
 
-    def move_linear(self, x, y, z, image_index=0, save_image=False):
+    def move_linear(self, x, y, z, save_image=False):
 
         # Aktuelle Pose auslegen und Zielpose festlegen
         home_pose=self.group.get_current_pose().pose
@@ -254,7 +254,7 @@ class CameraRoboter():
 
         # Aufnahme ein Bild
         self.wait()
-        self.get_image(save_image, image_index)
+        self.get_image(save_image)
 
     def move_joint(self, j0, j1, j2, j3, j4, j5, j6):
 
@@ -274,13 +274,13 @@ class CameraRoboter():
         # Stoppe den Roboter
         self.group.stop()
     
-    def move_ready_pose(self, image_index=0, save_image=False):
+    def move_ready_pose(self, save_image=False):
         [j0, j1, j2, j3, j4, j5, j6] = self.joints_ready
         self.move_joint(j0, j1, j2, j3, j4, j5, j6)
 
         # Aufnahme ein Bild
         self.wait()
-        self.get_image(save_image, image_index)
+        self.get_image(save_image)
 
     def rotate(self, angle):
 
@@ -332,7 +332,7 @@ class CameraRoboter():
         for i in range(num_step):
             x = pose.position.x + (i+1)*moving_step
             y = pose.position.y + (i+1)*corrector
-            self.move_linear(x, y, pose.position.z, image_index=i+1, save_image=save_image)
+            self.move_linear(x, y, pose.position.z, save_image=save_image)
 
     def return_to_ready_pose(self):
         self.move_joint(0, -pi/4, 0, -3*pi/4, 0, pi/2, -pi/4)
@@ -343,10 +343,10 @@ class CameraRoboter():
     # def update_pose(self):
         # self.pose = self.group.get_current_pose().pose
 
-    def get_image(self, take_image, image_index):
+    def get_image(self, take_image):
         pose = self.group.get_current_pose().pose
         if take_image is True:
-            filename = self.DataManager.generate_image_path(pose.position.x, image_index)
+            filename = self.DataManager.generate_image_path(pose.position.x)
             self.Camera.save_image(filename)
 
     def show_image(self):
@@ -373,24 +373,3 @@ class CameraRoboter():
 
     def wait(self):
         rospy.sleep(self.sleep_time)
-
-    def take_action(self, save_image=False):
-        
-        try:
-            '''
-            self.calibration()
-            self.return_to_ready_pose()
-
-            self.DataManager.ask_example_info()
-
-            for i in range(len(self.brightness_class)):
-                self.DataManager.set_brightness(self.brightness_class[i])
-                self.move_position(self.x_init, self.y_init, self.z_init, save_image=save_image)
-                self.move_linear_trajectory(0.016, 6, save_image=save_image)
-                self.return_to_ready_pose()
-                input("press any key to continue...")
-            '''
-            pass
-
-        finally:
-            self.close_camera()
