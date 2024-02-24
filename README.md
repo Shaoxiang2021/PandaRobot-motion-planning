@@ -17,20 +17,20 @@ By utilizing Panda robots, numerous image data from various poses can be generat
 ## Software Structure
 
 Project  
-  |      README.md  
-|      requirements.txt  
+|------README.md  
+|------requirements.txt  
 |  
 |_____ image  
 |        
 |  
 |_____ src  
 |  
-|      camera_roboter.py  
-|      data_manager.py  
-|      label_manager.py  
-|      ueye_camera.py  
-|      main_split_images.ipynb  
-|      main_take_images.ipynb  
+|------camera_roboter.py  
+|------data_manager.py  
+|------label_manager.py  
+|------ueye_camera.py  
+|------main_split_images.ipynb  
+|------main_take_images.ipynb  
 |  
   
 camera_roboter.py: defines a class to control the robot, containing functions for motion planning and controlling the camera to capture images.  
