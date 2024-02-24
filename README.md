@@ -22,7 +22,7 @@ Project
 |  
 |------README.md  
 |------requirements.txt  
-|------main.pdf
+|------main.pdf  
 |  
 |_____ image  
 |        
