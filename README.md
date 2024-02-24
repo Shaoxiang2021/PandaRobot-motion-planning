@@ -43,8 +43,8 @@ main_split_images.ipynb: main code to split images.
 
 ## Requirements
 
-Linux Ubuntu 20.04 LTS mit Echtzeit-Kernel der Version 5.9.1
-ROS-Framwork Noetic Ninjemys
-Python Version 3.7
-Pyueye Version 4.96.952
-OpenCV Version 4.8.0.76
+Linux Ubuntu 20.04 LTS mit Echtzeit-Kernel der Version 5.9.1  
+ROS-Framwork Noetic Ninjemys  
+Python Version 3.7  
+Pyueye Version 4.96.952  
+OpenCV Version 4.8.0.76  
