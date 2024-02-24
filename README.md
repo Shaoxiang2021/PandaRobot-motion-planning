@@ -17,12 +17,12 @@ By utilizing Panda robots, numerous image data from various poses can be generat
 ## Software Structure
 
 Project  
+|  
 |------README.md  
 |------requirements.txt  
 |  
 |_____ image  
 |        
-|  
 |_____ src  
 |  
 |------camera_roboter.py  
