@@ -18,7 +18,7 @@ By utilizing Panda robots, numerous image data from various poses can be generat
 
 Project  
 |\tREADME.md  
-|      requirements.txt  
+|                        requirements.txt  
 |  
 |_____ image  
 |        
