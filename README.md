@@ -16,30 +16,30 @@ By utilizing Panda robots, numerous image data from various poses can be generat
 
 ## Software Structure
 
-Project
-|      README.md
-|      requirements.txt
-|
-|_____ image
-|      
-|
-|_____ src
-|
-|      camera_roboter.py
-|      data_manager.py
-|      label_manager.py
-|      ueye_camera.py
-|      main_split_images.ipynb
-|      main_take_images.ipynb
-|
-
-camera_roboter.py: defines a class to control the robot, containing functions for motion planning and controlling the camera to capture images.
-ueye_camera.py: defines a class to control the camera, containing functions for video streaming and capturing images.
-label_manager.py: defines a class to manage image names, containing functions to rename images when necessary.
-data_manager.py: defines a class to split images and assign correct names, containing functions to split images into 3 sub-images with new names.
-
-main_take_images.ipynb: main code to generate images through robot motion planning.
-main_split_images.ipynb: main code to split images.
+Project  
+|      README.md  
+|      requirements.txt  
+|  
+|_____ image  
+|        
+|  
+|_____ src  
+|  
+|      camera_roboter.py  
+|      data_manager.py  
+|      label_manager.py  
+|      ueye_camera.py  
+|      main_split_images.ipynb  
+|      main_take_images.ipynb  
+|  
+  
+camera_roboter.py: defines a class to control the robot, containing functions for motion planning and controlling the camera to capture images.  
+ueye_camera.py: defines a class to control the camera, containing functions for video streaming and capturing images.  
+label_manager.py: defines a class to manage image names, containing functions to rename images when necessary.  
+data_manager.py: defines a class to split images and assign correct names, containing functions to split images into 3 sub-images with new names.  
+  
+main_take_images.ipynb: main code to generate images through robot motion planning.  
+main_split_images.ipynb: main code to split images.  
 
 
 
