@@ -17,7 +17,7 @@ By utilizing Panda robots, numerous image data from various poses can be generat
 ## Software Structure
 
 Project  
-|      README.md  
+|\tREADME.md  
 |      requirements.txt  
 |  
 |_____ image  
